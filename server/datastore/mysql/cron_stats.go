@@ -7,15 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-/*
-type CronStatsForHealthCheck struct {
-	Name      string    `db:"name" json:"name"`
-	Status    string    `db:"status" json:"status"`
-	CreatedAt time.Time `db:"created_at" json:"created"`
-	UpdatedAt time.Time `db:"updated_at" json:"updated"`
-}
-*/
-
 // GetLatestCronStats returns a slice of no more than two cron stats records, where index 0 (if
 // present) is the most recently created scheduled run, and index 1 (if present) represents a
 // triggered run that is currently pending.
