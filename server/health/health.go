@@ -3,6 +3,7 @@ package health
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/go-kit/kit/log"
 )
@@ -40,6 +41,8 @@ func Handler(logger log.Logger, allCheckers map[string]Checker) http.HandlerFunc
 		}
 
 		healthy := CheckHealth(logger, checkers)
+		//cronStats, _ := ds.GetHealthCheckCronStats()
+		//_ = json.NewEncoder(w).Encode(cronStats)
 		if !healthy {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -67,6 +70,13 @@ func Nop() Checker {
 }
 
 type nop struct{}
+
+type CronStats struct {
+	Name      string    `db:"name" json:"name"`
+	Status    string    `db:"status" json:"status"`
+	CreatedAt time.Time `db:"created_at" json:"created"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated"`
+}
 
 func (c nop) HealthCheck() error {
 	return nil
