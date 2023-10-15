@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/fleetdm/fleet/v4/server/health"
 	"io/ioutil"
 	"net/url"
 	"regexp"
@@ -695,33 +694,6 @@ func (ds *Datastore) HealthCheck() error {
 		}
 	}
 	return nil
-}
-
-func (ds *Datastore) GetHealthCheckCronStats() ([]health.CronStats, error) {
-	rows, err := ds.primary.QueryContext(context.Background(), `
-		SELECT cs1.name, cs1.status, cs1.created_at, updated_at
-		FROM cron_stats AS cs1
-				 JOIN (SELECT name, MAX(updated_at) AS upd -- can't include id due to sql_mode=only_full_group_by
-						FROM cron_stats
-						GROUP BY name) AS cs2
-					   ON cs1.updated_at = cs2.upd AND cs1.name = cs2.name
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var stats []health.CronStats
-	for rows.Next() {
-		var alb health.CronStats
-		if err := rows.Scan(&alb.Name, &alb.Status, &alb.CreatedAt, &alb.UpdatedAt); err != nil {
-			return stats, err
-		}
-		stats = append(stats, alb)
-	}
-	if err = rows.Err(); err != nil {
-		return stats, err
-	}
-	return stats, nil
 }
 
 func (ds *Datastore) closeStmts() error {

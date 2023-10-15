@@ -2,11 +2,19 @@ package mysql
 
 import (
 	"context"
-
 	"github.com/fleetdm/fleet/v4/server/contexts/ctxerr"
 	"github.com/fleetdm/fleet/v4/server/fleet"
 	"github.com/jmoiron/sqlx"
 )
+
+/*
+type CronStatsForHealthCheck struct {
+	Name      string    `db:"name" json:"name"`
+	Status    string    `db:"status" json:"status"`
+	CreatedAt time.Time `db:"created_at" json:"created"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated"`
+}
+*/
 
 // GetLatestCronStats returns a slice of no more than two cron stats records, where index 0 (if
 // present) is the most recently created scheduled run, and index 1 (if present) represents a
@@ -101,4 +109,31 @@ func (ds *Datastore) CleanupCronStats(ctx context.Context) error {
 
 		return nil
 	})
+}
+
+func (ds *Datastore) GetHealthCheckCronStats() ([]fleet.CronStatsForHealthCheck, error) {
+	rows, err := ds.primary.QueryContext(context.Background(), `
+		SELECT cs1.name, cs1.status, cs1.created_at, updated_at
+		FROM cron_stats AS cs1
+				 JOIN (SELECT name, MAX(updated_at) AS upd -- can't include id due to sql_mode=only_full_group_by
+						FROM cron_stats
+						GROUP BY name) AS cs2
+					   ON cs1.updated_at = cs2.upd AND cs1.name = cs2.name
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var stats []fleet.CronStatsForHealthCheck
+	for rows.Next() {
+		var alb fleet.CronStatsForHealthCheck
+		if err := rows.Scan(&alb.Name, &alb.Status, &alb.CreatedAt, &alb.UpdatedAt); err != nil {
+			return stats, err
+		}
+		stats = append(stats, alb)
+	}
+	if err = rows.Err(); err != nil {
+		return stats, err
+	}
+	return stats, nil
 }

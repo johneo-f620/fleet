@@ -2,10 +2,9 @@
 package health
 
 import (
-	"net/http"
-	"time"
-
+	"encoding/json"
 	"github.com/go-kit/kit/log"
+	"net/http"
 )
 
 // Checker returns an error indicating if a service is in an unhealthy state.
@@ -18,7 +17,7 @@ type Checker interface {
 // Handler responds with either:
 // 200 OK if the server can successfully communicate with it's backends or
 // 500 if any of the backends are reporting an issue.
-func Handler(logger log.Logger, allCheckers map[string]Checker) http.HandlerFunc {
+func Handler(logger log.Logger, allCheckers map[string]Checker, cronTabHandler func() any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		checkers := make(map[string]Checker)
 		checks, ok := r.URL.Query()["check"]
@@ -41,8 +40,7 @@ func Handler(logger log.Logger, allCheckers map[string]Checker) http.HandlerFunc
 		}
 
 		healthy := CheckHealth(logger, checkers)
-		//cronStats, _ := ds.GetHealthCheckCronStats()
-		//_ = json.NewEncoder(w).Encode(cronStats)
+		_ = json.NewEncoder(w).Encode(cronTabHandler())
 		if !healthy {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -70,13 +68,6 @@ func Nop() Checker {
 }
 
 type nop struct{}
-
-type CronStats struct {
-	Name      string    `db:"name" json:"name"`
-	Status    string    `db:"status" json:"status"`
-	CreatedAt time.Time `db:"created_at" json:"created"`
-	UpdatedAt time.Time `db:"updated_at" json:"updated"`
-}
 
 func (c nop) HealthCheck() error {
 	return nil

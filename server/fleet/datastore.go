@@ -600,6 +600,8 @@ type Datastore interface {
 	UpdateAllCronStatsForInstance(ctx context.Context, instance string, fromStatus CronStatsStatus, toStatus CronStatsStatus) error
 	// CleanupCronStats cleans up expired cron stats.
 	CleanupCronStats(ctx context.Context) error
+	// GetHealthCheckCronStats is meant for use by /healthz endpoint
+	GetHealthCheckCronStats() ([]CronStatsForHealthCheck, error)
 
 	///////////////////////////////////////////////////////////////////////////////
 	// Aggregated Stats
