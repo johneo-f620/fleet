@@ -17,7 +17,8 @@ type Checker interface {
 // Handler responds with either:
 // 200 OK if the server can successfully communicate with it's backends or
 // 500 if any of the backends are reporting an issue.
-func Handler(logger log.Logger, allCheckers map[string]Checker, cronTabHandler func() any) http.HandlerFunc {
+// getResponseBody provides JSON-marshallable content.
+func Handler(logger log.Logger, allCheckers map[string]Checker, getResponseBody func() any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		checkers := make(map[string]Checker)
 		checks, ok := r.URL.Query()["check"]
@@ -40,7 +41,7 @@ func Handler(logger log.Logger, allCheckers map[string]Checker, cronTabHandler f
 		}
 
 		healthy := CheckHealth(logger, checkers)
-		_ = json.NewEncoder(w).Encode(cronTabHandler())
+		_ = json.NewEncoder(w).Encode(getResponseBody())
 		if !healthy {
 			w.WriteHeader(http.StatusInternalServerError)
 			return

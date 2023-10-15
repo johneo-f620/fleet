@@ -840,8 +840,12 @@ the way that the Fleet server works.
 			launcher := launcher.New(svc, logger, grpc.NewServer(), healthCheckers)
 
 			rootMux := http.NewServeMux()
-			cronStats, _ := ds.GetHealthCheckCronStats()
 			rootMux.Handle("/healthz", service.PrometheusMetricsHandler("healthz", health.Handler(httpLogger, healthCheckers, func() any {
+				cronStats, err := ds.GetHealthCheckCronStats()
+				if err != nil {
+					_ = level.Error(logger).Log("Could not retrieve cron_stats for health check", err)
+					return map[any]any{}
+				}
 				return cronStats
 			})))
 			rootMux.Handle("/version", service.PrometheusMetricsHandler("version", version.Handler()))
