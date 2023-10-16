@@ -44,13 +44,19 @@ func TestHealthzHandler(t *testing.T) {
 
 	fail := Handler(logger, map[string]Checker{
 		"mock": failCheck,
+	}, func() any {
+		return nil
 	})
 	pass := Handler(logger, map[string]Checker{
 		"mock": passCheck,
+	}, func() any {
+		return nil
 	})
 	both := Handler(logger, map[string]Checker{
 		"pass": passCheck,
 		"fail": failCheck,
+	}, func() any {
+		return nil
 	})
 
 	httpTests := []struct {

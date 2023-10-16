@@ -33,3 +33,5 @@ func (m *Store) MigrationStatus(ctx context.Context) (*fleet.MigrationStatus, er
 	return &fleet.MigrationStatus{}, nil
 }
 func (m *Store) Name() string { return "mock" }
+
+func (m *Store) GetHealthCheckCronStats() ([]fleet.CronStatsForHealthCheck, error) { return nil, nil }

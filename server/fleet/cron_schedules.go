@@ -162,6 +162,13 @@ type CronStats struct {
 	Status CronStatsStatus `db:"status"`
 }
 
+type CronStatsForHealthCheck struct {
+	Name      string    `db:"name" json:"name"`
+	Status    string    `db:"status" json:"status"`
+	CreatedAt time.Time `db:"created_at" json:"created"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated"`
+}
+
 // CronStatsType is one of two recognized types of cron stats (i.e. "scheduled" or "triggered")
 type CronStatsType string
 

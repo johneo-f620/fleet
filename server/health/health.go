@@ -2,9 +2,10 @@
 package health
 
 import (
-	"net/http"
-
+	"encoding/json"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+	"net/http"
 )
 
 // Checker returns an error indicating if a service is in an unhealthy state.
@@ -17,7 +18,8 @@ type Checker interface {
 // Handler responds with either:
 // 200 OK if the server can successfully communicate with it's backends or
 // 500 if any of the backends are reporting an issue.
-func Handler(logger log.Logger, allCheckers map[string]Checker) http.HandlerFunc {
+// getResponseBody provides JSON-marshallable content.
+func Handler(logger log.Logger, allCheckers map[string]Checker, getResponseBody func() any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		checkers := make(map[string]Checker)
 		checks, ok := r.URL.Query()["check"]
@@ -42,6 +44,13 @@ func Handler(logger log.Logger, allCheckers map[string]Checker) http.HandlerFunc
 		healthy := CheckHealth(logger, checkers)
 		if !healthy {
 			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		encoder := json.NewEncoder(w)
+		body := getResponseBody()
+		err := encoder.Encode(body)
+		if err != nil {
+			_ = level.Error(logger).Log("While encoding to JSON", body)
 			return
 		}
 	}
