@@ -4,6 +4,7 @@ package health
 import (
 	"encoding/json"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"net/http"
 )
 
@@ -41,9 +42,15 @@ func Handler(logger log.Logger, allCheckers map[string]Checker, getResponseBody 
 		}
 
 		healthy := CheckHealth(logger, checkers)
-		_ = json.NewEncoder(w).Encode(getResponseBody())
 		if !healthy {
 			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		encoder := json.NewEncoder(w)
+		body := getResponseBody()
+		err := encoder.Encode(body)
+		if err != nil {
+			_ = level.Error(logger).Log("While encoding to JSON", body)
 			return
 		}
 	}
